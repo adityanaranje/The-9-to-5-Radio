@@ -56,8 +56,12 @@ export default function HomePage() {
 
   const handleSurprise = () => {
     const random = stations[Math.floor(Math.random() * stations.length)];
-    setSurprise(random.slug);
-    setTimeout(() => setSurprise(null), 2000);
+    setSurprise(random.name);
+    // Brief beat so the "Surprise" hint registers, then open the station.
+    setTimeout(() => {
+      setSurprise(null);
+      handlePlayStation(random);
+    }, 900);
   };
 
   const handlePlayStation = (station: Station) => {
@@ -155,7 +159,7 @@ export default function HomePage() {
                 </button>
               </div>
               {surprise && (
-                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-coral mt-4">Surprise: opening station...</motion.p>
+                <motion.p initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-coral mt-4">Surprise: opening {surprise}...</motion.p>
               )}
             </div>
           </div>
