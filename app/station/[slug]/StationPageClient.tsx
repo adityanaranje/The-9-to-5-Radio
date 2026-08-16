@@ -8,6 +8,7 @@ import { Station } from '@/types/station';
 import { isFavorite, toggleFavorite } from '@/lib/favorites';
 import { addRecentlyPlayed } from '@/lib/recentlyPlayed';
 import { formatListeners } from '@/lib/utils';
+import { stationPlaylists } from '@/data/playlists';
 import RadioPlayer from '@/components/player/RadioPlayer';
 import Equalizer from '@/components/player/Equalizer';
 
@@ -136,7 +137,7 @@ export default function StationPageClient({ station }: { station: Station }) {
             >
               <div className="w-full max-w-md mx-auto rounded-3xl bg-ink/40 border border-white/10 backdrop-blur-md p-4 md:p-6 shadow-2xl shadow-black/40">
                 <RadioPlayer
-                  tracks={station.tracks}
+                  playlistId={stationPlaylists[station.id] ?? ''}
                   onStateChange={setIsPlaying}
                   onError={() => {}}
                 />

@@ -22,7 +22,7 @@ A polished, production-ready Next.js + TypeScript website featuring 15 fictional
 
 - Cinematic homepage with mood selector, search, category filters, and featured stations
 - 15 immersive station pages with custom artwork, full-screen backgrounds, and glass overlays
-- Real-time YouTube playlist playback (embedded, no copyrighted hosting) — each station ships with a curated 20-track playlist resolved through YouTube search
+- Real-time YouTube playlist playback (embedded, no copyrighted hosting) — each station plays a YouTube playlist configured by ID
 - Favorites (localStorage) + Recently Played (localStorage)
 - "Surprise Me" random station button
 - Animated equalizer, progress bar, volume control, play/pause/next/previous
@@ -90,9 +90,10 @@ components/
     RadioPlayer.tsx   # YouTube IFrame Player
     Equalizer.tsx     # Animated equalizer bars
 data/
-  stations.ts         # All 15 station definitions
+  stations.ts         # All 15 station definitions (metadata only)
+  playlists.ts        # YouTube playlist ID per station (config — edit this)
 lib/
-  youtube.ts          # YouTube API loader + playlist simulation
+  youtube.ts          # YouTube IFrame Player API loader
   favorites.ts        # localStorage favorites
   recentlyPlayed.ts   # localStorage recently played
   utils.ts            # Helper functions
@@ -105,30 +106,45 @@ public/
 
 ---
 
-## Adding a New Station
+## Configuring Music (YouTube Playlists)
 
-Edit only `/data/stations.ts` and add a new object. All routes, cards, and pages update automatically.
+Songs are **not** hardcoded. Each station plays a YouTube playlist, configured by ID in `/data/playlists.ts`:
 
 ```ts
-{
-  id: 'new-station-id',
-  slug: 'new-station-id',
-  name: 'New Station FM',
-  tagline: 'A short tagline.',
-  description: 'A longer description.',
-  category: 'Mood',
-  mood: 'Calm',
-  artwork: '/images/stations/new.jpg',
-  youtubePlaylistId: 'PLAYLIST_ID_HERE',
-  listeners: 1000,
-  accentColor: '#c4953a',
-  tags: ['tag1', 'tag2'],
-  tracks: [
-    { title: 'Song Name', artist: 'Artist' },
-    { title: 'Another Song', artist: 'Artist' },
-  ],
-}
+export const stationPlaylists: Record<string, string> = {
+  'chai-break-fm': 'PLxxxxxxxxxxxxxxxxxxxxx',
+  'code-coffee': 'PLxxxxxxxxxxxxxxxxxxxxx',
+  // ...
+};
 ```
+
+- Paste the playlist ID (the value after `list=` in the playlist URL).
+- Leave a value empty (`''`) to show a "coming soon" state for that station.
+- The player loads the whole playlist and handles next/previous and track jump.
+
+> **Note:** the embedded player reports the *current* video's title/artist, but the full playlist track titles require the YouTube Data API (add `YOUTUBE_DATA_API_KEY` to `.env.local` if you want them). Playback itself needs no API key.
+
+## Adding a New Station
+
+1. Add a new object in `/data/stations.ts`:
+   ```ts
+   {
+     id: 'new-station-id',
+     slug: 'new-station-id',
+     name: 'New Station FM',
+     tagline: 'A short tagline.',
+     description: 'A longer description.',
+     category: 'Mood',
+     mood: 'Calm',
+     artwork: '/images/stations/new.jpg',
+     listeners: 1000,
+     accentColor: '#c4953a',
+     tags: ['tag1', 'tag2'],
+   }
+   ```
+2. Add its playlist ID to `/data/playlists.ts`.
+
+All routes, cards, and pages update automatically.
 
 ---
 

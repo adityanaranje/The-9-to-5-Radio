@@ -1,69 +1,62 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ListMusic } from 'lucide-react';
-import { loadYouTubeApi, buildTrackQuery } from '@/lib/youtube';
-import { Track } from '@/types/station';
+import { loadYouTubeApi } from '@/lib/youtube';
 
 interface PlayerProps {
-  tracks: Track[];
+  playlistId: string;
   onStateChange?: (isPlaying: boolean) => void;
   onError?: (hasError: boolean) => void;
 }
 
-export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerProps) {
+export default function RadioPlayer({ playlistId, onStateChange, onError }: PlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(60);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nowPlaying, setNowPlaying] = useState<{ title: string; artist: string } | null>(null);
+  const [position, setPosition] = useState(0);
+  const [playlistLength, setPlaylistLength] = useState(0);
 
   const playerRef = useRef<HTMLDivElement>(null);
   const ytPlayerRef = useRef<any>(null);
-  const indexRef = useRef(0);
-  const playingRef = useRef(false);
-  const tracksRef = useRef<Track[]>(tracks);
+  const playlistIdRef = useRef(playlistId);
 
   useEffect(() => {
-    tracksRef.current = tracks;
-  }, [tracks]);
+    playlistIdRef.current = playlistId;
+  }, [playlistId]);
 
-  const currentTrack = tracksRef.current[currentIndex] ?? tracksRef.current[0];
-
-  const playIndex = useCallback(
-    (index: number) => {
-      const list = tracksRef.current;
-      if (list.length === 0) return;
-      const safeIndex = ((index % list.length) + list.length) % list.length;
-      indexRef.current = safeIndex;
-      setCurrentIndex(safeIndex);
-      const player = ytPlayerRef.current;
-      const track = list[safeIndex];
-      if (!player || !track) return;
-      try {
-        player.loadPlaylist({
-          list: buildTrackQuery(track.title, track.artist),
-          listType: 'search',
-          index: 0,
-          startSeconds: 0,
-        });
-        if (playingRef.current) player.playVideo();
-      } catch {
-        // ignore — the player may not be ready yet
+  const refreshMeta = () => {
+    const player = ytPlayerRef.current;
+    if (!player) return;
+    try {
+      const data = player.getVideoData && player.getVideoData();
+      if (data && data.title) {
+        setNowPlaying({ title: data.title, artist: data.author || '' });
       }
-    },
-    []
-  );
+      const list = player.getPlaylist && player.getPlaylist();
+      if (list && Array.isArray(list)) setPlaylistLength(list.length);
+      const idx = player.getPlaylistIndex && player.getPlaylistIndex();
+      if (typeof idx === 'number') setPosition(idx);
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
-    if (tracks.length === 0) {
-      setHasError(true);
-      onError?.(true);
+    const id = playlistIdRef.current;
+
+    if (!id) {
       setIsLoading(false);
+      setHasError(false);
+      setNowPlaying(null);
+      setPosition(0);
+      setPlaylistLength(0);
       return;
     }
-    // (Re)initialize the player when the track list changes.
+
     if (ytPlayerRef.current) {
       try {
         ytPlayerRef.current.destroy();
@@ -72,10 +65,10 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
       }
       ytPlayerRef.current = null;
     }
-    setCurrentIndex(0);
-    indexRef.current = 0;
+
     setIsLoading(true);
     setHasError(false);
+    setNowPlaying(null);
 
     let cancelled = false;
     loadYouTubeApi()
@@ -84,7 +77,6 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
           setIsLoading(false);
           return;
         }
-        const first = tracksRef.current[0];
         try {
           ytPlayerRef.current = new (window.YT as any).Player(playerRef.current, {
             height: '0',
@@ -95,22 +87,24 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
               disablekb: 1,
               modestbranding: 1,
               rel: 0,
-              listType: 'search',
-              list: first ? buildTrackQuery(first.title, first.artist) : undefined,
             },
             events: {
               onReady: () => {
                 setIsLoading(false);
                 ytPlayerRef.current?.setVolume(volume);
+                try {
+                  // Load the playlist (cued, not auto-playing).
+                  ytPlayerRef.current?.cuePlaylist(id);
+                } catch {
+                  // ignore
+                }
+                refreshMeta();
               },
               onStateChange: (event: any) => {
                 const playing = event.data === window.YT?.PlayerState?.PLAYING;
-                playingRef.current = playing;
                 setIsPlaying(playing);
                 onStateChange?.(playing);
-                if (event.data === window.YT?.PlayerState?.ENDED) {
-                  playIndex(indexRef.current + 1);
-                }
+                refreshMeta();
                 if (event.data === window.YT?.PlayerState?.ERROR) {
                   setHasError(true);
                   onError?.(true);
@@ -119,6 +113,7 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
               onError: () => {
                 setHasError(true);
                 onError?.(true);
+                setIsLoading(false);
               },
             },
           });
@@ -140,14 +135,13 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tracks]);
+  }, [playlistId]);
 
   const handlePlay = () => {
     const player = ytPlayerRef.current;
     if (player && !isLoading && !hasError) {
       try {
         player.playVideo();
-        playingRef.current = true;
       } catch {
         // ignore
       }
@@ -159,18 +153,43 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
     if (player) {
       try {
         player.pauseVideo();
-        playingRef.current = false;
       } catch {
         // ignore
       }
     }
   };
 
-  const handleNext = () => playIndex(indexRef.current + 1);
-  const handlePrev = () => playIndex(indexRef.current - 1);
-  const handleSelect = (index: number) => {
-    playingRef.current = isPlaying;
-    playIndex(index);
+  const handleNext = () => {
+    const player = ytPlayerRef.current;
+    if (player) {
+      try {
+        player.nextVideo();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handlePrev = () => {
+    const player = ytPlayerRef.current;
+    if (player) {
+      try {
+        player.previousVideo();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handleJump = (index: number) => {
+    const player = ytPlayerRef.current;
+    if (player) {
+      try {
+        player.playVideoAt(index);
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const handleMuteToggle = () => {
@@ -206,10 +225,15 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
     }
   };
 
-  if (tracks.length === 0) {
+  // No playlist configured yet
+  if (!playlistId) {
     return (
-      <div className="flex items-center justify-center h-48 bg-white/[0.03] rounded-2xl border border-white/5">
-        <span className="text-sm text-white/30">This station is coming soon.</span>
+      <div className="flex flex-col items-center justify-center gap-2 h-44 rounded-2xl border border-white/5 bg-white/[0.03] text-center px-6">
+        <ListMusic size={20} className="text-white/20" />
+        <span className="text-sm text-white/40">Playlist coming soon.</span>
+        <span className="text-[11px] text-white/20">
+          Add a YouTube playlist ID for this station in <code className="text-white/30">data/playlists.ts</code>.
+        </span>
       </div>
     );
   }
@@ -260,9 +284,11 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
             style={{ width: isLoading ? '20%' : isPlaying ? '55%' : '40%' }}
           />
         </div>
-        <span className="text-[11px] text-white/20 font-mono shrink-0">
-          {String(currentIndex + 1).padStart(2, '0')}/{String(tracks.length).padStart(2, '0')}
-        </span>
+        {playlistLength > 0 && (
+          <span className="text-[11px] text-white/20 font-mono shrink-0">
+            {String(position + 1).padStart(2, '0')}/{String(playlistLength).padStart(2, '0')}
+          </span>
+        )}
       </div>
 
       {/* Volume */}
@@ -295,45 +321,47 @@ export default function RadioPlayer({ tracks, onStateChange, onError }: PlayerPr
           <span className="text-[10px] text-white/20">Check your connection or try another station.</span>
         </div>
       ) : (
-        currentTrack && (
-          <div className="text-center mb-3">
-            <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Now Playing</p>
-            <p className="font-serif text-xl text-white font-medium mt-1 leading-tight">{currentTrack.title}</p>
-            <p className="text-sm text-white/30">{currentTrack.artist}</p>
-          </div>
-        )
+        <div className="text-center mb-3">
+          <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Now Playing</p>
+          {nowPlaying ? (
+            <>
+              <p className="font-serif text-xl text-white font-medium mt-1 leading-tight line-clamp-2">{nowPlaying.title}</p>
+              <p className="text-sm text-white/30 line-clamp-1">{nowPlaying.artist}</p>
+            </>
+          ) : (
+            <p className="font-serif text-xl text-white/40 font-medium mt-1">{isLoading ? 'Loading playlist…' : 'Press play'}</p>
+          )}
+        </div>
       )}
 
-      {/* Tracklist */}
-      <div className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
-          <ListMusic size={14} className="text-amber" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">Tracklist</span>
+      {/* Tracklist (numbers only — titles need the YouTube Data API) */}
+      {playlistLength > 0 && (
+        <div className="rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5">
+            <ListMusic size={14} className="text-amber" />
+            <span className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">Playlist</span>
+            <span className="ml-auto text-[10px] font-mono text-white/20">{playlistLength} tracks</span>
+          </div>
+          <ul className="max-h-40 overflow-y-auto overscroll-contain grid grid-cols-4 sm:grid-cols-5 gap-1 p-2">
+            {Array.from({ length: playlistLength }).map((_, i) => {
+              const active = i === position;
+              return (
+                <li key={i}>
+                  <button
+                    onClick={() => handleJump(i)}
+                    aria-label={`Track ${i + 1}`}
+                    className={`w-full rounded-lg py-1.5 text-[11px] font-mono transition-colors ${
+                      active ? 'bg-amber text-ink' : 'text-white/40 hover:bg-white/10 hover:text-white/70'
+                    }`}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-        <ul className="max-h-48 overflow-y-auto overscroll-contain divide-y divide-white/[0.03]">
-          {tracks.map((track, i) => {
-            const active = i === currentIndex;
-            return (
-              <li key={`${track.title}-${i}`}>
-                <button
-                  onClick={() => handleSelect(i)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                    active ? 'bg-amber/10' : 'hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <span className={`w-6 text-[11px] font-mono shrink-0 ${active ? 'text-amber' : 'text-white/20'}`}>
-                    {active ? '▶' : String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className={`block text-sm truncate ${active ? 'text-amber' : 'text-white/70'}`}>{track.title}</span>
-                    <span className="block text-[11px] text-white/25 truncate">{track.artist}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      )}
     </div>
   );
 }
