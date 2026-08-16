@@ -15,7 +15,7 @@ export const stationPlaylists: Record<string, string> = {
   'deep-work-fm': process.env.NEXT_PUBLIC_PLAYLIST_DEEP_WORK_FM || '',
   'deadline-mode': process.env.NEXT_PUBLIC_PLAYLIST_DEADLINE_MODE || '',
   'post-lunch-fm': process.env.NEXT_PUBLIC_PLAYLIST_POST_LUNCH_FM || '',
-  'friday-5pm': process.env.NEXT_PUBLIC_PLAYLIST_FRIDAY_5PM || '',
+  'friday-5-pm': process.env.NEXT_PUBLIC_PLAYLIST_FRIDAY_5PM || '',
   'salary-credited-fm': process.env.NEXT_PUBLIC_PLAYLIST_SALARY_CREDITED_FM || '',
   'wfh-radio': process.env.NEXT_PUBLIC_PLAYLIST_WFH_RADIO || '',
   'late-night-deployment': process.env.NEXT_PUBLIC_PLAYLIST_LATE_NIGHT_DEPLOYMENT || '',
