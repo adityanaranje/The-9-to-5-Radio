@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ListMusic } from 'lucide-react';
-import { loadYouTubeApi } from '@/lib/youtube';
+import { loadYouTubeApi, normalizePlaylistId } from '@/lib/youtube';
 
 interface PlayerProps {
   playlistId: string;
@@ -10,23 +10,35 @@ interface PlayerProps {
   onError?: (hasError: boolean) => void;
 }
 
+const ERROR_MESSAGES: Record<number, string> = {
+  2: 'Invalid playlist ID.',
+  5: 'The player could not start.',
+  100: 'Playlist not found. Check the ID.',
+  101: 'Embedding not allowed for this video.',
+  150: 'Embedding not allowed for this video.',
+};
+
 export default function RadioPlayer({ playlistId, onStateChange, onError }: PlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(60);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
   const [nowPlaying, setNowPlaying] = useState<{ title: string; artist: string } | null>(null);
   const [position, setPosition] = useState(0);
   const [playlistLength, setPlaylistLength] = useState(0);
 
   const playerRef = useRef<HTMLDivElement>(null);
   const ytPlayerRef = useRef<any>(null);
-  const playlistIdRef = useRef(playlistId);
+  const playlistIdRef = useRef('');
+  const skipCountRef = useRef(0);
+
+  const cleanId = normalizePlaylistId(playlistId);
 
   useEffect(() => {
-    playlistIdRef.current = playlistId;
-  }, [playlistId]);
+    playlistIdRef.current = cleanId;
+  }, [cleanId]);
 
   const refreshMeta = () => {
     const player = ytPlayerRef.current;
@@ -51,6 +63,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
     if (!id) {
       setIsLoading(false);
       setHasError(false);
+      setErrorCode(null);
       setNowPlaying(null);
       setPosition(0);
       setPlaylistLength(0);
@@ -68,7 +81,27 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
 
     setIsLoading(true);
     setHasError(false);
+    setErrorCode(null);
     setNowPlaying(null);
+    skipCountRef.current = 0;
+
+    const handleError = () => {
+      const player = ytPlayerRef.current;
+      skipCountRef.current += 1;
+      // A single unplayable video (e.g. embedding disabled) shouldn't kill the
+      // whole station — try to skip ahead a few times before giving up.
+      if (player && skipCountRef.current <= 5) {
+        try {
+          player.nextVideo();
+          return;
+        } catch {
+          // fall through to hard error
+        }
+      }
+      setHasError(true);
+      onError?.(true);
+      setIsLoading(false);
+    };
 
     let cancelled = false;
     loadYouTubeApi()
@@ -91,10 +124,10 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
             events: {
               onReady: () => {
                 setIsLoading(false);
-                ytPlayerRef.current?.setVolume(volume);
                 try {
-                  // Load the playlist (cued, not auto-playing).
-                  ytPlayerRef.current?.cuePlaylist(id);
+                  ytPlayerRef.current?.setVolume(volume);
+                  // Cue the playlist by ID (object form is the reliable way).
+                  ytPlayerRef.current?.cuePlaylist({ listType: 'playlist', list: id });
                 } catch {
                   // ignore
                 }
@@ -102,18 +135,17 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
               },
               onStateChange: (event: any) => {
                 const playing = event.data === window.YT?.PlayerState?.PLAYING;
+                if (playing) skipCountRef.current = 0;
                 setIsPlaying(playing);
                 onStateChange?.(playing);
                 refreshMeta();
                 if (event.data === window.YT?.PlayerState?.ERROR) {
-                  setHasError(true);
-                  onError?.(true);
+                  handleError();
                 }
               },
-              onError: () => {
-                setHasError(true);
-                onError?.(true);
-                setIsLoading(false);
+              onError: (event: any) => {
+                setErrorCode(typeof event?.data === 'number' ? event.data : null);
+                handleError();
               },
             },
           });
@@ -226,7 +258,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
   };
 
   // No playlist configured yet
-  if (!playlistId) {
+  if (!cleanId) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 h-44 rounded-2xl border border-white/5 bg-white/[0.03] text-center px-6">
         <ListMusic size={20} className="text-white/20" />
@@ -314,11 +346,13 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
         />
       </div>
 
-      {/* Now playing */}
+      {/* Now playing / error */}
       {hasError ? (
-        <div className="flex flex-col items-center justify-center h-24 bg-red-900/10 rounded-2xl border border-red-500/10 mb-3">
-          <span className="text-sm text-red-300/60 mb-1">Playback error</span>
-          <span className="text-[10px] text-white/20">Check your connection or try another station.</span>
+        <div className="flex flex-col items-center justify-center h-24 bg-red-900/10 rounded-2xl border border-red-500/10 mb-3 px-4 text-center">
+          <span className="text-sm text-red-300/60 mb-1">
+            {errorCode != null ? ERROR_MESSAGES[errorCode] || `Playback error (code ${errorCode})` : 'Playback error'}
+          </span>
+          <span className="text-[10px] text-white/20">Check the playlist ID in data/playlists.ts — the playlist must be Public or Unlisted.</span>
         </div>
       ) : (
         <div className="text-center mb-3">

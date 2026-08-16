@@ -35,8 +35,22 @@ declare global {
         getCurrentTime: () => number;
         getDuration: () => number;
         destroy: () => void;
-        loadPlaylist: (playlist: string | string[], index?: number, startSeconds?: number) => void;
-        cuePlaylist: (playlist: string | string[], index?: number, startSeconds?: number) => void;
+        loadPlaylist: (
+          playlist:
+            | string
+            | string[]
+            | { list?: string; listType?: 'playlist' | 'search' | 'user_uploads'; index?: number; startSeconds?: number },
+          index?: number,
+          startSeconds?: number
+        ) => void;
+        cuePlaylist: (
+          playlist:
+            | string
+            | string[]
+            | { list?: string; listType?: 'playlist' | 'search' | 'user_uploads'; index?: number; startSeconds?: number },
+          index?: number,
+          startSeconds?: number
+        ) => void;
         nextVideo: () => void;
         previousVideo: () => void;
         playVideoAt: (index: number) => void;
@@ -56,6 +70,15 @@ declare global {
     };
   }
 }
+
+export const normalizePlaylistId = (value: string): string => {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return '';
+  // Full URL or a "list=..." fragment → extract just the ID.
+  const match = trimmed.match(/[?&]list=([^&\s#]+)/);
+  if (match) return match[1];
+  return trimmed;
+};
 
 export const loadYouTubeApi = (): Promise<void> => {
   return new Promise((resolve, reject) => {
