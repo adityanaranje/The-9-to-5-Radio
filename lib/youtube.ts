@@ -25,7 +25,7 @@ declare global {
         playVideo: () => void;
         pauseVideo: () => void;
         stopVideo: () => void;
-        seekTo: (seconds: number) => void;
+        seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
         setVolume: (volume: number) => void;
         mute: () => void;
         unMute: () => void;
