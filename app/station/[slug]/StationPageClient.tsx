@@ -95,19 +95,19 @@ export default function StationPageClient({ station }: { station: Station }) {
             >
               <div className="mb-2 flex items-center justify-center lg:justify-start gap-3">
                 <span className="w-8 h-[1px] bg-white/10" />
-                <span className="text-[10px] font-bold tracking-[0.3em] text-white/30 uppercase">{station.category}</span>
+                <span className="text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase">{station.category}</span>
                 <span className="w-8 h-[1px] bg-white/10 lg:hidden" />
               </div>
 
               <h1 className="font-serif text-4xl sm:text-5xl xl:text-6xl font-bold text-paper leading-[0.95] tracking-tight mb-3 drop-shadow-2xl">
                 {station.name}
               </h1>
-              <p className="text-sm md:text-lg text-white/50 font-light mb-2 max-w-xl mx-auto lg:mx-0">{station.tagline}</p>
-              <p className="text-xs md:text-sm text-white/30 max-w-xl mx-auto lg:mx-0 mb-4 line-clamp-3">{station.description}</p>
+              <p className="text-sm md:text-lg text-white/80 font-light mb-2 max-w-xl mx-auto lg:mx-0">{station.tagline}</p>
+              <p className="text-xs md:text-sm text-white/60 max-w-xl mx-auto lg:mx-0 mb-4 line-clamp-3">{station.description}</p>
 
               <div className="inline-flex items-center justify-center lg:justify-start gap-2 rounded-full bg-white/5 border border-white/10 px-5 py-2 mb-4 backdrop-blur-md">
                 <span className="text-sm leading-none">{station.listenerEmoji}</span>
-                <span className="text-xs font-mono text-white/50">
+                <span className="text-xs font-mono text-white/80">
                   {formatListeners(liveListeners)} people {station.listenerPhrase}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-coral animate-pulse" />
@@ -119,7 +119,7 @@ export default function StationPageClient({ station }: { station: Station }) {
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-2">
                 {station.tags.map((tag) => (
-                  <span key={tag} className="text-[10px] uppercase tracking-widest text-white/20 bg-white/5 border border-white/5 px-3 py-1 rounded-full">
+                  <span key={tag} className="text-[10px] uppercase tracking-widest text-white/50 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
                     {tag}
                   </span>
                 ))}

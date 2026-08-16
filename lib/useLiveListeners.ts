@@ -12,7 +12,12 @@ function randomize(base: number): number {
  * time so it feels "live" instead of showing the same static number.
  */
 export function useLiveListeners(base: number): number {
-  const [listeners, setListeners] = useState<number>(() => randomize(base));
+  // Initialize with the deterministic base value so server-rendered HTML
+  // matches the client's first render. Randomizing here with Math.random()
+  // would produce different values on server and client, causing a React
+  // hydration mismatch. The mount effect below randomizes right after
+  // hydration, and the interval keeps it drifting afterwards.
+  const [listeners, setListeners] = useState<number>(base);
   const baseRef = useRef(base);
 
   useEffect(() => {
