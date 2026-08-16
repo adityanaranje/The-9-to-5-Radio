@@ -36,7 +36,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-white/40 tracking-wide">© 2025 9to5 Radio. No copyright infringement intended.</p>
+          <p className="text-[11px] text-white/40 tracking-wide">© 2026 9to5 Radio. No copyright infringement intended.</p>
           <div className="flex items-center gap-4">
             <p className="text-[11px] text-white/40 tracking-wide">Built for workdays everywhere.</p>
             <a
