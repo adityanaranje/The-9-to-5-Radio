@@ -9,6 +9,7 @@ import { isFavorite, toggleFavorite } from '@/lib/favorites';
 import { addRecentlyPlayed } from '@/lib/recentlyPlayed';
 import { formatListeners } from '@/lib/utils';
 import { stationPlaylists } from '@/data/playlists';
+import { useLiveListeners } from '@/lib/useLiveListeners';
 import RadioPlayer from '@/components/player/RadioPlayer';
 import Equalizer from '@/components/player/Equalizer';
 
@@ -16,6 +17,7 @@ export default function StationPageClient({ station }: { station: Station }) {
   const [favorite, setFavorite] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const liveListeners = useLiveListeners(station.listeners);
 
   useEffect(() => {
     setFavorite(isFavorite(station.id));
@@ -105,7 +107,7 @@ export default function StationPageClient({ station }: { station: Station }) {
 
               <div className="inline-flex items-center justify-center lg:justify-start gap-2.5 rounded-full bg-white/5 border border-white/10 px-5 py-2 mb-4 backdrop-blur-md">
                 <Headphones size={14} className="text-amber" />
-                <span className="text-xs font-mono text-white/50">{formatListeners(station.listeners)} listening</span>
+                <span className="text-xs font-mono text-white/50">{formatListeners(liveListeners)} listening</span>
                 <span className="w-1 h-1 rounded-full bg-coral animate-pulse" />
               </div>
 

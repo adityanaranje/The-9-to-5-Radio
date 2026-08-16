@@ -412,6 +412,32 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
         </button>
       </div>
 
+      {/* Minute markers — jump to any minute like YouTube */}
+      {duration > 60 && (
+        <div className="mb-3">
+          <div className="flex gap-1 overflow-x-auto overscroll-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {Array.from({ length: Math.ceil(duration / 60) }).map((_, m) => {
+              const start = m * 60;
+              const active = currentTime >= start && currentTime < start + 60;
+              return (
+                <button
+                  key={m}
+                  onClick={() => handleSeek(start)}
+                  aria-label={`Jump to ${m}:00`}
+                  className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-mono transition-colors ${
+                    active
+                      ? 'bg-amber text-ink'
+                      : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'
+                  }`}
+                >
+                  {m}:00
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Volume */}
       <div className="flex items-center justify-center gap-3 mb-3">
         <button
