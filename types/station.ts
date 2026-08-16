@@ -10,4 +10,6 @@ export interface Station {
   listeners: number;
   accentColor: string;
   tags: string[];
+  listenerEmoji: string;
+  listenerPhrase: string;
 }

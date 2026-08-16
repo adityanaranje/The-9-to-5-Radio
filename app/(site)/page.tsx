@@ -239,7 +239,7 @@ export default function HomePage() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70 border border-white/5">
                       {station.mood}
                     </span>
-                    <span className="text-[10px] font-mono text-white/40 bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-sm"><LiveListeners value={station.listeners} /></span>
+                    <span className="text-[10px] font-mono text-white/40 bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-sm">{station.listenerEmoji} <LiveListeners value={station.listeners} /></span>
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7">

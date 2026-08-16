@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Heart, Share2, Headphones } from 'lucide-react';
+import { ArrowLeft, Heart, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Station } from '@/types/station';
@@ -105,9 +105,11 @@ export default function StationPageClient({ station }: { station: Station }) {
               <p className="text-sm md:text-lg text-white/50 font-light mb-2 max-w-xl mx-auto lg:mx-0">{station.tagline}</p>
               <p className="text-xs md:text-sm text-white/30 max-w-xl mx-auto lg:mx-0 mb-4 line-clamp-3">{station.description}</p>
 
-              <div className="inline-flex items-center justify-center lg:justify-start gap-2.5 rounded-full bg-white/5 border border-white/10 px-5 py-2 mb-4 backdrop-blur-md">
-                <Headphones size={14} className="text-amber" />
-                <span className="text-xs font-mono text-white/50">{formatListeners(liveListeners)} listening</span>
+              <div className="inline-flex items-center justify-center lg:justify-start gap-2 rounded-full bg-white/5 border border-white/10 px-5 py-2 mb-4 backdrop-blur-md">
+                <span className="text-sm leading-none">{station.listenerEmoji}</span>
+                <span className="text-xs font-mono text-white/50">
+                  {formatListeners(liveListeners)} people {station.listenerPhrase}
+                </span>
                 <span className="w-1 h-1 rounded-full bg-coral animate-pulse" />
               </div>
 
