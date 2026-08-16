@@ -93,7 +93,7 @@ export default function HomePage() {
               What kind of <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber to-coral">workday</span> are you having?
             </h1>
             <p className="text-lg md:text-xl text-white/30 max-w-xl leading-relaxed mb-10">
-              15 fictional radio stations for every mood, meeting, commute, deadline and break of your corporate life. No database. Just you, the station, and the soundtrack.
+              16 fictional radio stations for every mood, meeting, commute, deadline and break of your corporate life. No database. Just you, the station, and the soundtrack.
             </p>
 
             {/* Search */}

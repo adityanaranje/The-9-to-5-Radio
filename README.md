@@ -2,7 +2,7 @@
 
 **The soundtrack of your workday.**
 
-A polished, production-ready Next.js + TypeScript website featuring 15 fictional radio stations tuned to every mood, meeting, commute, deadline, and break of modern corporate life.
+A polished, production-ready Next.js + TypeScript website featuring 16 fictional radio stations tuned to every mood, meeting, commute, deadline, and break of modern corporate life.
 
 ---
 
@@ -21,7 +21,7 @@ A polished, production-ready Next.js + TypeScript website featuring 15 fictional
 ## Features
 
 - Cinematic homepage with mood selector, search, category filters, and featured stations
-- 15 immersive station pages with custom artwork, full-screen backgrounds, and glass overlays
+- 16 immersive station pages with custom artwork, full-screen backgrounds, and glass overlays
 - Real-time YouTube playlist playback (embedded, no copyrighted hosting) — each station plays a YouTube playlist configured by ID
 - Favorites (localStorage) + Recently Played (localStorage)
 - "Surprise Me" random station button
@@ -90,8 +90,8 @@ components/
     RadioPlayer.tsx   # YouTube IFrame Player
     Equalizer.tsx     # Animated equalizer bars
 data/
-  stations.ts         # All 15 station definitions (metadata only)
-  playlists.ts        # YouTube playlist ID per station (config — edit this)
+  stations.ts         # All 16 station definitions (metadata only)
+  playlists.ts        # YouTube playlist ID per station (reads from env vars)
 lib/
   youtube.ts          # YouTube IFrame Player API loader
   favorites.ts        # localStorage favorites
@@ -101,26 +101,26 @@ types/
   station.ts          # Station type definition
   player.ts           # Player state type
 public/
-  images/stations/    # Original station artwork (15 images)
+  images/stations/    # Original station artwork (16 images)
 ```
 
 ---
 
 ## Configuring Music (YouTube Playlists)
 
-Songs are **not** hardcoded. Each station plays a YouTube playlist, configured by ID in `/data/playlists.ts`:
+Songs are **not** hardcoded. Each station plays a YouTube playlist, configured by ID in your environment variables (`.env.local` or your deploy platform's env config):
 
-```ts
-export const stationPlaylists: Record<string, string> = {
-  'chai-break-fm': 'PLxxxxxxxxxxxxxxxxxxxxx',
-  'code-coffee': 'PLxxxxxxxxxxxxxxxxxxxxx',
-  // ...
-};
+```bash
+NEXT_PUBLIC_PLAYLIST_CHAI_BREAK_FM=PLxxxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_PLAYLIST_CODE_COFFEE=PLxxxxxxxxxxxxxxxxxxxxx
+# ...
 ```
 
-- Paste the playlist ID (the value after `list=` in the playlist URL).
-- Leave a value empty (`''`) to show a "coming soon" state for that station.
+- Copy `.env.example` to `.env.local` and fill in the playlist IDs.
+- The value is the part after `list=` in the playlist URL.
+- Leave a value empty to show a "coming soon" state for that station.
 - The player loads the whole playlist and handles next/previous and track jump.
+- `NEXT_PUBLIC_LINKEDIN_URL` sets the LinkedIn link on the footer icon.
 
 > **Note:** the embedded player reports the *current* video's title/artist, but the full playlist track titles require the YouTube Data API (add `YOUTUBE_DATA_API_KEY` to `.env.local` if you want them). Playback itself needs no API key.
 
@@ -142,7 +142,7 @@ export const stationPlaylists: Record<string, string> = {
      tags: ['tag1', 'tag2'],
    }
    ```
-2. Add its playlist ID to `/data/playlists.ts`.
+2. Add its playlist ID as `NEXT_PUBLIC_PLAYLIST_<STATION_ID>` in `.env.local`.
 
 All routes, cards, and pages update automatically.
 

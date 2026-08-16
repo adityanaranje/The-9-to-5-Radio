@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Radio, Headphones, Heart, Info, Menu, X, Search } from 'lucide-react';
 import { useState } from 'react';

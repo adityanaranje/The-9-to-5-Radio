@@ -11,7 +11,7 @@ export default function AboutPage() {
             9to5 Radio is an unofficial soundtrack for modern work life. From the first chai break to the final deployment, every workday has a mood.
           </p>
           <p>
-            We created 15 fictional radio stations — each one tuned to a different moment in the corporate experience. Whether you are surviving Monday, celebrating salary day, or quietly resigning, there is a station playing exactly the right frequency.
+            We created 16 fictional radio stations — each one tuned to a different moment in the corporate experience. Whether you are surviving Monday, celebrating salary day, or quietly resigning, there is a station playing exactly the right frequency.
           </p>
           <p>
             There is no database. There are no user accounts. Music comes from embedded third-party services. We simply provide the theme, the artwork, and the playlist — the rest is your workday, playing in the background.
@@ -19,7 +19,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">
               <Radio size={20} className="text-amber mb-4" />
-              <h3 className="text-paper font-bold mb-2">15 Stations</h3>
+              <h3 className="text-paper font-bold mb-2">16 Stations</h3>
               <p className="text-sm text-white/20">From calm to crisis, from morning commute to late-night deployment.</p>
             </div>
             <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6">

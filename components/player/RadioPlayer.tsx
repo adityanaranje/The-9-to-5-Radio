@@ -329,7 +329,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
         <ListMusic size={20} className="text-white/20" />
         <span className="text-sm text-white/40">Playlist coming soon.</span>
         <span className="text-[11px] text-white/20">
-          Add a YouTube playlist ID for this station in <code className="text-white/30">data/playlists.ts</code>.
+          Add a YouTube playlist ID for this station in <code className="text-white/30">.env.local</code>.
         </span>
       </div>
     );
@@ -467,7 +467,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
           <span className="text-sm text-red-300/60 mb-1">
             {errorCode != null ? ERROR_MESSAGES[errorCode] || `Playback error (code ${errorCode})` : 'Playback error'}
           </span>
-          <span className="text-[10px] text-white/20">Check the playlist ID in data/playlists.ts — the playlist must be Public or Unlisted.</span>
+          <span className="text-[10px] text-white/20">Check the playlist ID in .env.local — the playlist must be Public or Unlisted.</span>
         </div>
       ) : (
         <div className="flex items-center gap-3 mb-3">

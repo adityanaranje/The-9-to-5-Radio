@@ -211,4 +211,18 @@ export const stations: Station[] = [
     accentColor: '#5a3e3e',
     tags: ['burnout', 'calm', 'slow', 'minimal'],
   },
+  {
+    id: 'monsoon-desk-fm',
+    slug: 'monsoon-desk-fm',
+    name: 'Monsoon Desk FM',
+    tagline: 'Rain on the window. Chai on the desk. Code on the screen.',
+    description:
+      'The sound of heavy rain, soft lo-fi, and a window streaked with water. For the days the monsoon keeps the world outside — when the desk feels quieter, the chai stays warm, and work settles into the rhythm of falling rain.',
+    category: 'Work',
+    mood: 'Calm',
+    artwork: '/images/stations/monsoon-desk.jpg',
+    listeners: 2710,
+    accentColor: '#4a7d8a',
+    tags: ['monsoon', 'rain', 'desk', 'cozy', 'lofi'],
+  },
 ];
