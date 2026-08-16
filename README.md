@@ -22,7 +22,7 @@ A polished, production-ready Next.js + TypeScript website featuring 15 fictional
 
 - Cinematic homepage with mood selector, search, category filters, and featured stations
 - 15 immersive station pages with custom artwork, full-screen backgrounds, and glass overlays
-- Real-time YouTube playlist playback (embedded, no copyrighted hosting)
+- Real-time YouTube playlist playback (embedded, no copyrighted hosting) — each station ships with a curated 20-track playlist resolved through YouTube search
 - Favorites (localStorage) + Recently Played (localStorage)
 - "Surprise Me" random station button
 - Animated equalizer, progress bar, volume control, play/pause/next/previous
@@ -123,6 +123,10 @@ Edit only `/data/stations.ts` and add a new object. All routes, cards, and pages
   listeners: 1000,
   accentColor: '#c4953a',
   tags: ['tag1', 'tag2'],
+  tracks: [
+    { title: 'Song Name', artist: 'Artist' },
+    { title: 'Another Song', artist: 'Artist' },
+  ],
 }
 ```
 
