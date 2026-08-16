@@ -7,6 +7,11 @@
 //       -> NEXT_PUBLIC_PLAYLIST_...=PLxxxxxxxxxxxxxxxxxxxxx
 //
 // Leave a value unset (or empty) to show a "coming soon" state for that station.
+//
+// Keys MUST match station.id in data/stations.ts exactly — the player looks
+// playlists up by id, so a mismatched key silently disables the station.
+import { stations } from '@/data/stations';
+
 export const stationPlaylists: Record<string, string> = {
   'chai-break-fm': process.env.NEXT_PUBLIC_PLAYLIST_CHAI_BREAK_FM || '',
   'code-coffee': process.env.NEXT_PUBLIC_PLAYLIST_CODE_COFFEE || '',
@@ -25,3 +30,11 @@ export const stationPlaylists: Record<string, string> = {
   'corporate-burnout-fm': process.env.NEXT_PUBLIC_PLAYLIST_CORPORATE_BURNOUT_FM || '',
   'monsoon-desk-fm': process.env.NEXT_PUBLIC_PLAYLIST_MONSOON_DESK_FM || '',
 };
+
+if (process.env.NODE_ENV === 'development') {
+  for (const s of stations) {
+    if (!(s.id in stationPlaylists)) {
+      console.warn(`[playlists] No playlist key for station id "${s.id}" — add '${s.id}' to stationPlaylists or the station will show no songs.`);
+    }
+  }
+}
