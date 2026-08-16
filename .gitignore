@@ -1,1 +1,22 @@
+<<<<<<< HEAD
 node_modules
+=======
+# dependencies
+/node_modules
+
+# next.js build output
+/.next
+/out
+
+# local env files
+.env
+.env.local
+.env.*.local
+
+# typescript
+tsconfig.tsbuildinfo
+
+# misc
+.DS_Store
+*.log
+>>>>>>> d4a5cc776c31e668d61fe5cfe3a44ec845d26387

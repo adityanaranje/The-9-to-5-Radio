@@ -26,6 +26,9 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
   const [hasError, setHasError] = useState(false);
   const [errorCode, setErrorCode] = useState<number | null>(null);
   const [nowPlaying, setNowPlaying] = useState<{ title: string; artist: string } | null>(null);
+  const [videoId, setVideoId] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [playlistLength, setPlaylistLength] = useState(0);
 
@@ -47,6 +50,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
       const data = player.getVideoData && player.getVideoData();
       if (data && data.title) {
         setNowPlaying({ title: data.title, artist: data.author || '' });
+        if (data.video_id) setVideoId(data.video_id);
       }
       const list = player.getPlaylist && player.getPlaylist();
       if (list && Array.isArray(list)) setPlaylistLength(list.length);
@@ -57,6 +61,23 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
     }
   };
 
+  // Poll playback position for the seek bar.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const player = ytPlayerRef.current;
+      if (!player) return;
+      try {
+        const t = player.getCurrentTime && player.getCurrentTime();
+        const d = player.getDuration && player.getDuration();
+        if (typeof t === 'number') setCurrentTime(t);
+        if (typeof d === 'number' && d > 0) setDuration(d);
+      } catch {
+        // ignore
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const id = playlistIdRef.current;
 
@@ -65,6 +86,9 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
       setHasError(false);
       setErrorCode(null);
       setNowPlaying(null);
+      setVideoId('');
+      setCurrentTime(0);
+      setDuration(0);
       setPosition(0);
       setPlaylistLength(0);
       return;
@@ -83,6 +107,9 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
     setHasError(false);
     setErrorCode(null);
     setNowPlaying(null);
+    setVideoId('');
+    setCurrentTime(0);
+    setDuration(0);
     skipCountRef.current = 0;
 
     const handleError = () => {
@@ -257,6 +284,44 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
     }
   };
 
+  const seekBy = (delta: number) => {
+    const player = ytPlayerRef.current;
+    if (!player) return;
+    try {
+      const t = player.getCurrentTime ? player.getCurrentTime() : 0;
+      const d = player.getDuration ? player.getDuration() : 0;
+      let target = (typeof t === 'number' ? t : 0) + delta;
+      if (target < 0) target = 0;
+      if (typeof d === 'number' && d > 0 && target > d) target = Math.max(0, d - 0.5);
+      player.seekTo(target, true);
+      setCurrentTime(target);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSeek = (value: number) => {
+    const player = ytPlayerRef.current;
+    if (!player) return;
+    try {
+      player.seekTo(value, true);
+      setCurrentTime(value);
+    } catch {
+      // ignore
+    }
+  };
+
+  const formatTime = (s: number): string => {
+    if (!isFinite(s) || s < 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const thumbnailUrl = videoId
+    ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+    : null;
+
   // No playlist configured yet
   if (!cleanId) {
     return (
@@ -264,7 +329,7 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
         <ListMusic size={20} className="text-white/20" />
         <span className="text-sm text-white/40">Playlist coming soon.</span>
         <span className="text-[11px] text-white/20">
-          Add a YouTube playlist ID for this station in <code className="text-white/30">data/playlists.ts</code>.
+          Add a YouTube playlist ID for this station in <code className="text-white/30">.env.local</code>.
         </span>
       </div>
     );
@@ -307,21 +372,71 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
         </button>
       </div>
 
-      {/* Progress + status */}
-      <div className="flex items-center gap-3 mb-3">
+      {/* Status line */}
+      <div className="flex items-center justify-center gap-3 mb-2">
         <span className="text-[11px] text-white/20 font-mono shrink-0">{isLoading ? 'LOADING' : isPlaying ? 'ON AIR' : 'PAUSED'}</span>
-        <div className="flex-1 h-[2px] bg-white/5 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-amber via-coral to-amber rounded-full transition-all duration-500"
-            style={{ width: isLoading ? '20%' : isPlaying ? '55%' : '40%' }}
-          />
-        </div>
         {playlistLength > 0 && (
           <span className="text-[11px] text-white/20 font-mono shrink-0">
             {String(position + 1).padStart(2, '0')}/{String(playlistLength).padStart(2, '0')}
           </span>
         )}
       </div>
+
+      {/* Seek — back 10s / progress / forward 10s */}
+      <div className="flex items-center gap-2 mb-2">
+        <button
+          onClick={() => seekBy(-10)}
+          aria-label="Back 10 seconds"
+          className="h-8 w-8 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-paper hover:bg-white/10 flex items-center justify-center transition-all shrink-0"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0-8 8" /><polyline points="3 11 3 3 11 3" /><line x1="10" y1="10" x2="10" y2="15" /><line x1="10" y1="12.5" x2="13" y2="12.5" /></svg>
+        </button>
+        <span className="text-[10px] font-mono text-white/40 w-9 text-right shrink-0">{formatTime(currentTime)}</span>
+        <input
+          type="range"
+          min={0}
+          max={duration > 0 ? duration : 0}
+          step={1}
+          value={Math.min(currentTime, duration > 0 ? duration : 0)}
+          onChange={(e) => handleSeek(Number(e.target.value))}
+          className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-amber cursor-pointer"
+          aria-label="Seek"
+        />
+        <span className="text-[10px] font-mono text-white/40 w-9 shrink-0">{formatTime(duration)}</span>
+        <button
+          onClick={() => seekBy(10)}
+          aria-label="Forward 10 seconds"
+          className="h-8 w-8 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-paper hover:bg-white/10 flex items-center justify-center transition-all shrink-0"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 19a8 8 0 1 0 0-16 8 8 0 0 0 8 8" /><polyline points="21 11 21 3 13 3" /><line x1="14" y1="10" x2="14" y2="15" /><line x1="14" y1="12.5" x2="17" y2="12.5" /></svg>
+        </button>
+      </div>
+
+      {/* Minute markers — jump to any minute like YouTube */}
+      {duration > 60 && (
+        <div className="mb-3">
+          <div className="flex gap-1 overflow-x-auto overscroll-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {Array.from({ length: Math.ceil(duration / 60) }).map((_, m) => {
+              const start = m * 60;
+              const active = currentTime >= start && currentTime < start + 60;
+              return (
+                <button
+                  key={m}
+                  onClick={() => handleSeek(start)}
+                  aria-label={`Jump to ${m}:00`}
+                  className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-mono transition-colors ${
+                    active
+                      ? 'bg-amber text-ink'
+                      : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'
+                  }`}
+                >
+                  {m}:00
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Volume */}
       <div className="flex items-center justify-center gap-3 mb-3">
@@ -352,19 +467,32 @@ export default function RadioPlayer({ playlistId, onStateChange, onError }: Play
           <span className="text-sm text-red-300/60 mb-1">
             {errorCode != null ? ERROR_MESSAGES[errorCode] || `Playback error (code ${errorCode})` : 'Playback error'}
           </span>
-          <span className="text-[10px] text-white/20">Check the playlist ID in data/playlists.ts — the playlist must be Public or Unlisted.</span>
+          <span className="text-[10px] text-white/20">Check the playlist ID in .env.local — the playlist must be Public or Unlisted.</span>
         </div>
       ) : (
-        <div className="text-center mb-3">
-          <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Now Playing</p>
-          {nowPlaying ? (
-            <>
-              <p className="font-serif text-xl text-white font-medium mt-1 leading-tight line-clamp-2">{nowPlaying.title}</p>
-              <p className="text-sm text-white/30 line-clamp-1">{nowPlaying.artist}</p>
-            </>
+        <div className="flex items-center gap-3 mb-3">
+          {thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt={nowPlaying?.title || 'Now playing'}
+              className="w-16 h-16 rounded-xl object-cover shrink-0 border border-white/10 shadow-lg"
+            />
           ) : (
-            <p className="font-serif text-xl text-white/40 font-medium mt-1">{isLoading ? 'Loading playlist…' : 'Press play'}</p>
+            <div className="w-16 h-16 rounded-xl shrink-0 bg-white/5 border border-white/10 flex items-center justify-center">
+              <ListMusic size={18} className="text-white/20" />
+            </div>
           )}
+          <div className="min-w-0 text-left">
+            <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Now Playing</p>
+            {nowPlaying ? (
+              <>
+                <p className="font-serif text-lg text-white font-medium mt-0.5 leading-tight line-clamp-2">{nowPlaying.title}</p>
+                <p className="text-sm text-white/30 line-clamp-1">{nowPlaying.artist}</p>
+              </>
+            ) : (
+              <p className="font-serif text-lg text-white/40 font-medium mt-0.5">{isLoading ? 'Loading playlist…' : 'Press play'}</p>
+            )}
+          </div>
         </div>
       )}
 

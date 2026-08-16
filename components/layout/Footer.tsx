@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { Radio } from 'lucide-react';
+import { Radio, Linkedin } from 'lucide-react';
+
+const LINKEDIN_URL = process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/';
 
 export default function Footer() {
   return (
@@ -35,7 +37,18 @@ export default function Footer() {
         </div>
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-white/15 tracking-wide">© 2025 9to5 Radio. No copyright infringement intended.</p>
-          <p className="text-[11px] text-white/15 tracking-wide">Built for workdays everywhere.</p>
+          <div className="flex items-center gap-4">
+            <p className="text-[11px] text-white/15 tracking-wide">Built for workdays everywhere.</p>
+            <a
+              href={LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="text-white/30 hover:text-paper transition-colors"
+            >
+              <Linkedin size={16} />
+            </a>
+          </div>
         </div>
       </div>
     </footer>

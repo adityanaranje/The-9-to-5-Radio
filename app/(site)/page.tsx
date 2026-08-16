@@ -9,6 +9,7 @@ import { Station } from '@/types/station';
 import { isFavorite, toggleFavorite } from '@/lib/favorites';
 import { getRecentlyPlayed, addRecentlyPlayed } from '@/lib/recentlyPlayed';
 import { formatListeners, cn } from '@/lib/utils';
+import { useLiveListeners } from '@/lib/useLiveListeners';
 
 const moods = [
   { label: 'Surviving', icon: Zap, color: '#6e8a9e' },
@@ -20,6 +21,11 @@ const moods = [
 ];
 
 const categories = ['All', ...Array.from(new Set(stations.map((s) => s.category)))];
+
+function LiveListeners({ value }: { value: number }) {
+  const listeners = useLiveListeners(value);
+  return <>{formatListeners(listeners)}</>;
+}
 
 export default function HomePage() {
   const [search, setSearch] = useState('');
@@ -87,7 +93,7 @@ export default function HomePage() {
               What kind of <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber to-coral">workday</span> are you having?
             </h1>
             <p className="text-lg md:text-xl text-white/30 max-w-xl leading-relaxed mb-10">
-              15 fictional radio stations for every mood, meeting, commute, deadline and break of your corporate life. No database. Just you, the station, and the soundtrack.
+              16 fictional radio stations for every mood, meeting, commute, deadline and break of your corporate life. No database. Just you, the station, and the soundtrack.
             </p>
 
             {/* Search */}
@@ -233,7 +239,7 @@ export default function HomePage() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70 border border-white/5">
                       {station.mood}
                     </span>
-                    <span className="text-[10px] font-mono text-white/40 bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-sm">{formatListeners(station.listeners)}</span>
+                    <span className="text-[10px] font-mono text-white/40 bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-sm">{station.listenerEmoji} <LiveListeners value={station.listeners} /></span>
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7">
