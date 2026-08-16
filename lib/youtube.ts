@@ -35,18 +35,14 @@ declare global {
         getCurrentTime: () => number;
         getDuration: () => number;
         destroy: () => void;
-        loadPlaylist: (
-          playlist:
-            | string
-            | string[]
-            | { list?: string; listType?: 'playlist' | 'search' | 'user_uploads'; index?: number; startSeconds?: number }
-        ) => void;
-        cuePlaylist: (
-          playlist:
-            | string
-            | string[]
-            | { list?: string; listType?: 'playlist' | 'search' | 'user_uploads'; index?: number; startSeconds?: number }
-        ) => void;
+        loadPlaylist: (playlist: string | string[], index?: number, startSeconds?: number) => void;
+        cuePlaylist: (playlist: string | string[], index?: number, startSeconds?: number) => void;
+        nextVideo: () => void;
+        previousVideo: () => void;
+        playVideoAt: (index: number) => void;
+        getPlaylist: () => string[];
+        getPlaylistIndex: () => number;
+        getVideoData: () => { video_id: string; author: string; title: string };
       };
       PlayerState?: {
         ENDED: number;
@@ -80,8 +76,4 @@ export const loadYouTubeApi = (): Promise<void> => {
     tag.onerror = () => reject(new Error('Failed to load YouTube IFrame API'));
     document.body.appendChild(tag);
   });
-};
-
-export const buildTrackQuery = (title: string, artist: string): string => {
-  return `${title} ${artist}`.trim();
 };

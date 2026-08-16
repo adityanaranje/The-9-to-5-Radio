@@ -1,8 +1,3 @@
-export interface Track {
-  title: string;
-  artist: string;
-}
-
 export interface Station {
   id: string;
   slug: string;
@@ -12,9 +7,7 @@ export interface Station {
   category: string;
   mood: string;
   artwork: string;
-  youtubePlaylistId: string;
   listeners: number;
   accentColor: string;
   tags: string[];
-  tracks: Track[];
 }
